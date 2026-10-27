@@ -1,0 +1,166 @@
+version: 2
+
+models:
+  - name: stg_currencies
+    description: Currencies, deduplicated to the latest bronze snapshot.
+    columns:
+      - name: currency_id
+        data_tests: [unique, not_null]
+      - name: currency_code
+        data_tests: [not_null]
+  - name: stg_countries
+    columns:
+      - name: country_id
+        data_tests: [unique, not_null]
+  - name: stg_country_currencies
+    columns:
+      - name: country_currency_id
+        data_tests: [unique, not_null]
+  - name: stg_cities
+    columns:
+      - name: city_id
+        data_tests: [unique, not_null]
+  - name: stg_document_types
+    columns:
+      - name: document_type_id
+        data_tests: [unique, not_null]
+  - name: stg_clients
+    description: Clients with normalised document numbers, e-mails and industries.
+    columns:
+      - name: client_id
+        data_tests: [unique, not_null]
+  - name: stg_users
+    description: Platform users with a derived `user_type` (Supplier, Staff, Field operations).
+    columns:
+      - name: user_id
+        data_tests: [unique, not_null]
+  - name: stg_contracts
+    columns:
+      - name: contract_id
+        data_tests: [unique, not_null]
+  - name: stg_units
+    description: Managed properties. Zero placeholders for areas, year and coordinates become NULL.
+    columns:
+      - name: unit_id
+        data_tests: [unique, not_null]
+  - name: stg_unit_team_members
+    columns:
+      - name: unit_team_member_id
+        data_tests: [unique, not_null]
+  - name: stg_module_templates
+    columns:
+      - name: module_template_id
+        data_tests: [unique, not_null]
+  - name: stg_unit_modules
+    columns:
+      - name: unit_module_id
+        data_tests: [unique, not_null]
+  - name: stg_space_templates
+    columns:
+      - name: space_template_id
+        data_tests: [unique, not_null]
+  - name: stg_spaces
+    columns:
+      - name: space_id
+        data_tests: [unique, not_null]
+  - name: stg_systems
+    columns:
+      - name: system_id
+        data_tests: [unique, not_null]
+  - name: stg_subsystems
+    columns:
+      - name: subsystem_id
+        data_tests: [unique, not_null]
+  - name: stg_elements
+    description: Equipment with its service window parsed into ISO weekdays and minutes after midnight.
+    columns:
+      - name: element_id
+        data_tests: [unique, not_null]
+      - name: availability_weekdays
+        description: ISO weekdays (1 = Monday) on which the element must be in service.
+        data_tests: [not_null]
+      - name: availability_start_minute
+        description: Start of the daily service window, minutes after midnight.
+      - name: availability_end_minute
+        description: End of the daily service window; <= start means the window crosses midnight.
+  - name: stg_activity_plans
+    columns:
+      - name: activity_plan_id
+        data_tests: [unique, not_null]
+      - name: frequency
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('activity_frequencies')
+                field: frequency
+  - name: stg_scheduled_activities
+    columns:
+      - name: scheduled_activity_id
+        data_tests: [unique, not_null]
+  - name: stg_element_failures
+    columns:
+      - name: element_failure_id
+        data_tests: [unique, not_null]
+  - name: stg_meters
+    columns:
+      - name: meter_id
+        data_tests: [unique, not_null]
+  - name: stg_meter_readings
+    description: Meter readings, built incrementally (MERGE on `meter_reading_id`).
+    columns:
+      - name: meter_reading_id
+        data_tests: [unique, not_null]
+  - name: stg_ticket_typologies
+    columns:
+      - name: typology_id
+        data_tests: [unique, not_null]
+  - name: stg_ticket_subtypologies
+    columns:
+      - name: subtypology_id
+        data_tests: [unique, not_null]
+  - name: stg_tickets
+    columns:
+      - name: ticket_id
+        data_tests: [unique, not_null]
+      - name: status_code
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["new", "open", "in_progress", "suspended", "closed"]
+  - name: stg_budgets
+    columns:
+      - name: budget_id
+        data_tests: [unique, not_null]
+  - name: stg_budget_chapters
+    columns:
+      - name: budget_chapter_id
+        data_tests: [unique, not_null]
+      - name: chapter_type
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('budget_chapter_types')
+                field: chapter_type
+  - name: stg_budget_items
+    columns:
+      - name: budget_item_id
+        data_tests: [unique, not_null]
+  - name: stg_budget_subitems
+    columns:
+      - name: budget_subitem_id
+        data_tests: [unique, not_null]
+  - name: stg_budget_concepts
+    columns:
+      - name: budget_concept_id
+        data_tests: [unique, not_null]
+  - name: int_budget_lines_monthly
+    description: Budget items and chapter taxes unpivoted from wide (one column per month) to long format.
+    columns:
+      - name: budget_line_month_id
+        data_tests: [unique, not_null]
+      - name: month_number
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                quote: false

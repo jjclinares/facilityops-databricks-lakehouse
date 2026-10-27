@@ -1,0 +1,21 @@
+version: 2
+
+seeds:
+  - name: activity_frequencies
+    description: >
+      Recurrence rules of maintenance plans. Every frequency reduces to a
+      cadence unit (`once`, `day`, `month`) and an interval. Kept in sync with
+      `medallion_ingest.scheduling.FREQUENCIES` by a unit test.
+    columns:
+      - name: frequency
+        data_tests: [unique, not_null]
+      - name: cadence_unit
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["once", "day", "month"]
+  - name: budget_chapter_types
+    description: Display label and reporting order of budget chapter types.
+    columns:
+      - name: chapter_type
+        data_tests: [unique, not_null]

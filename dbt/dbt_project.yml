@@ -1,0 +1,49 @@
+name: medallion
+version: "1.0.0"
+profile: medallion
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+
+clean-targets:
+  - target
+  - dbt_packages
+
+vars:
+  # fact_maintenance_activities: calendar window used to derive expected activities
+  activity_lookback_days: 365
+  activity_horizon_days: 30
+  # fact_service_tickets: SLA fallbacks when a ticket has no explicit SLA
+  default_response_sla_hours: 24
+  default_resolution_sla_hours: 48
+
+models:
+  medallion:
+    +file_format: delta
+    silver:
+      +schema: silver
+      +materialized: table
+      +tblproperties:
+        layer: silver
+    gold:
+      +schema: gold
+      +materialized: table
+      +persist_docs:
+        relation: true
+        columns: true
+      +tblproperties:
+        layer: gold
+
+seeds:
+  medallion:
+    +schema: silver
+    activity_frequencies:
+      +column_types:
+        cadence_interval: int
+    budget_chapter_types:
+      +column_types:
+        chapter_type_order: int
+        is_expense: boolean

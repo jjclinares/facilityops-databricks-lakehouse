@@ -1,0 +1,249 @@
+version: 2
+
+models:
+  # ------------------------------------------------------------------ dimensions
+  - name: dim_date
+    description: Calendar dimension from Jan 1 two years ago to Dec 31 next year.
+    columns:
+      - name: date_day
+        description: Calendar date (primary key).
+        data_tests: [unique, not_null]
+      - name: date_key
+        description: Integer key in yyyymmdd format.
+
+  - name: dim_country
+    description: Countries with their primary reporting currency.
+    columns:
+      - name: country_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+      - name: currency_code
+        description: ISO code of the primary currency.
+
+  - name: dim_city
+    description: Cities denormalised with their country and currency.
+    columns:
+      - name: city_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+
+  - name: dim_client
+    description: Companies that contract facility services.
+    columns:
+      - name: client_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+
+  - name: dim_person
+    description: Platform users - technicians, supervisors, managers, suppliers.
+    columns:
+      - name: person_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+      - name: user_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Supplier", "Staff", "Field operations"]
+
+  - name: dim_unit
+    description: Managed properties with contract, client, location and manager.
+    columns:
+      - name: unit_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+      - name: currency_code
+        description: Local currency of the unit; budget amounts are expressed in it.
+
+  - name: dim_module
+    description: Building modules (cost centres) enabled per unit.
+    columns:
+      - name: module_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+      - name: unit_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_unit')
+                field: unit_sk
+
+  - name: dim_space
+    description: Physical spaces inside a unit module.
+    columns:
+      - name: space_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+
+  - name: dim_element
+    description: Maintained equipment with system hierarchy, location and service window.
+    columns:
+      - name: element_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+      - name: availability_window
+        description: Daily service window as HH:MM-HH:MM (end before start = crosses midnight).
+      - name: weekly_service_hours
+        description: Hours per week the element is expected to be in service.
+      - name: operational_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Available", "Out of service"]
+
+  - name: dim_meter
+    description: Utility meters.
+    columns:
+      - name: meter_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+
+  - name: dim_budget_account
+    description: Budget chart of accounts - concept, subitem, item, chapter, budget.
+    columns:
+      - name: budget_account_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+
+  - name: bridge_unit_team
+    description: Many-to-many bridge between units and the people on their operations team.
+    columns:
+      - name: unit_team_member_sk
+        data_tests: [unique, not_null]
+
+  # ----------------------------------------------------------------------- facts
+  - name: fact_maintenance_activities
+    description: >
+      One row per maintenance activity occurrence. Reconciles occurrences
+      expected from each plan's recurrence rule with activities registered by
+      technicians, so missed activities are visible as `Overdue`.
+    columns:
+      - name: activity_sk
+        description: Surrogate key (plan, date, registered activity).
+        data_tests: [unique, not_null]
+      - name: status
+        description: Closed on time, Closed late, Pending (future) or Overdue (past, not closed).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Closed on time", "Closed late", "Pending", "Overdue"]
+      - name: days_late
+        description: Days between the scheduled date and completion (or today, if still open).
+      - name: is_planned_occurrence
+        description: True when the plan's recurrence rule expects an activity on this date.
+      - name: is_registered
+        description: True when technicians created the activity in the platform.
+      - name: scheduled_date
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+      - name: unit_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_unit')
+                field: unit_sk
+      - name: element_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_element')
+                field: element_sk
+
+  - name: fact_element_failures
+    description: Equipment failures with total duration and service hours lost.
+    columns:
+      - name: element_failure_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+      - name: failure_hours
+        description: Hours from detection until closure (or now, if still open).
+      - name: unavailable_hours
+        description: Failure hours that overlap the element's service window.
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Closed", "Awaiting parts", "In repair"]
+      - name: element_sk
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_element')
+                field: element_sk
+
+  - name: fact_meter_readings
+    description: Cumulative meter readings and the consumption derived from them.
+    columns:
+      - name: meter_reading_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+      - name: consumption
+        description: Delta to the previous reading; NULL for the first reading or after a meter reset.
+      - name: meter_sk
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_meter')
+                field: meter_sk
+      - name: reading_date
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+
+  - name: fact_service_tickets
+    description: Service-desk tickets with response and resolution SLA compliance.
+    columns:
+      - name: ticket_sk
+        description: Surrogate key.
+        data_tests: [unique, not_null]
+      - name: response_sla_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Met", "Breached", "Pending"]
+      - name: resolution_sla_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Met", "Breached", "In progress", "Suspended"]
+      - name: unit_sk
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_unit')
+                field: unit_sk
+
+  - name: fact_budget
+    description: Planned vs. spent per budget line and month, for approved budgets (local currency).
+    columns:
+      - name: budget_line_sk
+        description: Surrogate key (line type, line, month).
+        data_tests: [unique, not_null]
+      - name: variance_amount
+        description: planned_amount - spent_amount (positive = under budget).
+      - name: execution_ratio
+        description: spent_amount / planned_amount.
+      - name: budget_month
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_day
+      - name: unit_sk
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_unit')
+                field: unit_sk

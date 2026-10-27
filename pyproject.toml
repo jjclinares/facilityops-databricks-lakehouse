@@ -1,0 +1,44 @@
+[project]
+name = "medallion-ingest"
+version = "1.0.0"
+description = "Bronze ingestion (Auto Loader / JDBC) and synthetic source data for a Databricks medallion lakehouse."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Jamer Jilver Castro Linares" }]
+# PySpark and the Databricks SDK are provided by the Databricks runtime, so the
+# wheel deployed to the job has no third-party dependencies.
+dependencies = []
+
+[project.scripts]
+generate-data = "medallion_ingest.cli:generate"
+ingest-bronze = "medallion_ingest.cli:ingest"
+
+[dependency-groups]
+dev = [
+    "dbt-databricks>=1.10,<2.0",
+    "pre-commit>=4.0",
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+# Optional: run the PySpark code locally against a remote workspace.
+connect = ["databricks-connect>=15.4; python_version < '3.13'"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/medallion_ingest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["RUF001"]

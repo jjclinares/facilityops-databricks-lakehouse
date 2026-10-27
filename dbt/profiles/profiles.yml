@@ -1,0 +1,19 @@
+# Local development profile (the Databricks job generates its own profile from
+# the SQL warehouse configured in resources/medallion_pipeline.job.yml).
+#
+#   export DATABRICKS_HOST=dbc-xxxxxxxx-xxxx.cloud.databricks.com
+#   export DATABRICKS_HTTP_PATH=/sql/1.0/warehouses/<warehouse-id>
+#   export DATABRICKS_TOKEN=<personal-access-token>
+#   export DBT_SCHEMA_PREFIX=dev_<your_name>_        # optional, isolates your schemas
+#   dbt build --profiles-dir profiles
+medallion:
+  target: dev
+  outputs:
+    dev:
+      type: databricks
+      host: "{{ env_var('DATABRICKS_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
+      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      catalog: "{{ env_var('DATABRICKS_CATALOG', 'workspace') }}"
+      schema: "{{ env_var('DBT_SCHEMA_PREFIX', '') }}gold"
+      threads: 8

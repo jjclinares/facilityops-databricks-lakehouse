@@ -1,0 +1,72 @@
+version: 2
+
+sources:
+  - name: facilityops
+    description: >
+      Raw tables of FacilityOps, the operational facility-management platform.
+      Loaded into bronze by the `medallion_ingest` package (Auto Loader from the
+      landing volume, or JDBC from PostgreSQL). Bronze is append-only and every
+      row carries `_ingested_at` and `_source_file` lineage columns.
+    schema: "{{ (var('schema_prefix', env_var('DBT_SCHEMA_PREFIX', '')) or '') ~ 'bronze' }}"
+    config:
+      loaded_at_field: _ingested_at
+      freshness:
+        warn_after: {count: 26, period: hour}
+        error_after: {count: 72, period: hour}
+    tables:
+      - name: currencies
+        description: ISO currencies.
+      - name: countries
+        description: Countries where the company operates.
+      - name: country_currencies
+        description: Currencies accepted per country; `is_primary` marks the reporting currency.
+      - name: cities
+      - name: document_types
+        description: Legal identification document types per country (tax id, national id...).
+      - name: clients
+        description: Companies that contract facility-management services.
+      - name: users
+        description: Platform users - technicians, supervisors, unit managers, suppliers.
+      - name: contracts
+        description: Service contracts signed with clients.
+      - name: units
+        description: Managed properties (office towers, malls, hospitals, campuses...).
+      - name: unit_team_members
+        description: Users assigned to the operations team of a unit.
+      - name: module_templates
+        description: Catalogue of building modules / cost centres (HVAC, Electrical, ...).
+      - name: unit_modules
+        description: Modules enabled in a unit, each one a cost centre.
+      - name: space_templates
+      - name: spaces
+        description: Physical spaces of a unit module (machine room, rooftop, lobby...).
+      - name: systems
+      - name: subsystems
+      - name: elements
+        description: >
+          Maintained equipment. `availability_days` ('mon_fri') and
+          `availability_schedule` ('08-00_18-00', overnight allowed) define the
+          service window used to compute downtime.
+      - name: activity_plans
+        description: Recurring maintenance plans for an element.
+      - name: scheduled_activities
+        description: Activities materialised from plans and executed by technicians.
+      - name: element_failures
+        description: Equipment failures, from detection until the element is back in service.
+      - name: meters
+        description: Utility meters (electricity, water, gas).
+      - name: meter_readings
+        description: Cumulative meter readings, roughly daily.
+      - name: ticket_typologies
+      - name: ticket_subtypologies
+      - name: tickets
+        description: Service-desk requests, complaints and claims raised by tenants and clients.
+      - name: budgets
+        description: Yearly budget per unit; only `approved` budgets are reported.
+      - name: budget_chapters
+        description: Budget chapters by type with monthly tax (VAT) columns in wide format.
+      - name: budget_items
+        description: Budget lines with planned / spent amounts in wide format (one column per month).
+      - name: budget_subitems
+      - name: budget_concepts
+        description: Lowest level of the chart of accounts, mapped to accounting codes.

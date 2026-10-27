@@ -1,0 +1,25 @@
+name: Deploy bundle
+
+# Deploys the prod target on every push to aws_migrations. Enable it by adding the
+# repository secrets DATABRICKS_HOST and DATABRICKS_TOKEN and the repository
+# variable DEPLOY_ENABLED=true.
+on:
+  push:
+    branches: [aws_migrations]
+  workflow_dispatch:
+
+concurrency: deploy-prod
+
+jobs:
+  deploy:
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle validate -t prod
+      - run: databricks bundle deploy -t prod

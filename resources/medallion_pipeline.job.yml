@@ -1,0 +1,91 @@
+resources:
+  jobs:
+    medallion_pipeline:
+      name: medallion_pipeline
+      description: >
+        FacilityOps medallion lakehouse - lands raw data in bronze (Auto Loader
+        or JDBC), then builds the silver and gold layers with dbt on a SQL
+        warehouse. Everything runs on serverless compute.
+      max_concurrent_runs: 1
+      tags:
+        project: medallion-lakehouse
+      schedule:
+        # daily at 05:00 UTC (paused automatically in the dev target)
+        quartz_cron_expression: "0 0 5 * * ?"
+        timezone_id: UTC
+
+      tasks:
+        - task_key: is_synthetic_source
+          condition_task:
+            op: EQUAL_TO
+            left: ${var.source}
+            right: synthetic
+
+        - task_key: generate_synthetic_data
+          description: Writes a fresh FacilityOps snapshot (parquet) to the landing volume.
+          depends_on:
+            - task_key: is_synthetic_source
+              outcome: "true"
+          environment_key: ingest
+          python_wheel_task:
+            package_name: medallion_ingest
+            entry_point: generate-data
+            parameters:
+              - --catalog
+              - ${var.catalog}
+              - --schema-prefix
+              - ${var.schema_prefix}
+              - --scale
+              - ${var.synthetic_scale}
+
+        - task_key: ingest_bronze
+          description: Appends new landing files (Auto Loader) or snapshots PostgreSQL (JDBC) into bronze Delta tables.
+          depends_on:
+            - task_key: is_synthetic_source
+            - task_key: generate_synthetic_data
+          # still runs when generate_synthetic_data is skipped by the condition
+          run_if: NONE_FAILED
+          environment_key: ingest
+          max_retries: 1
+          min_retry_interval_millis: 60000
+          python_wheel_task:
+            package_name: medallion_ingest
+            entry_point: ingest-bronze
+            parameters:
+              - --catalog
+              - ${var.catalog}
+              - --schema-prefix
+              - ${var.schema_prefix}
+              - --source
+              - ${var.source}
+              - --secret-scope
+              - ${var.secret_scope}
+
+        - task_key: dbt_build
+          description: Seeds, source freshness, then builds and tests the silver and gold layers.
+          depends_on:
+            - task_key: ingest_bronze
+          environment_key: dbt
+          dbt_task:
+            project_directory: ../dbt
+            warehouse_id: ${var.warehouse_id}
+            catalog: ${var.catalog}
+            schema: ${var.schema_prefix}gold
+            commands:
+              - dbt deps
+              # fails the run if bronze has not been refreshed for 72 h
+              - 'dbt source freshness --vars "{schema_prefix: ''${var.schema_prefix}''}"'
+              # seeds + models + tests, in DAG order; a failing test stops downstream models
+              - 'dbt build --vars "{schema_prefix: ''${var.schema_prefix}''}"'
+
+      environments:
+        - environment_key: ingest
+          spec:
+            environment_version: "3"
+            dependencies:
+              - ../dist/*.whl
+        - environment_key: dbt
+          spec:
+            environment_version: "3"
+            dependencies:
+              - dbt-databricks>=1.10,<2.0

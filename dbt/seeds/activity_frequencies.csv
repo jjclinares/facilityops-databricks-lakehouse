@@ -1,0 +1,15 @@
+frequency,frequency_label,cadence_unit,cadence_interval
+one_time,One time,once,0
+daily,Daily,day,1
+weekly,Weekly,day,7
+biweekly,Every two weeks,day,14
+monthly,Monthly,month,1
+bimonthly,Every two months,month,2
+quarterly,Quarterly,month,3
+every_four_months,Every four months,month,4
+semiannual,Semiannual,month,6
+annual,Annual,month,12
+biennial,Every two years,month,24
+triennial,Every three years,month,36
+quadrennial,Every four years,month,48
+quinquennial,Every five years,month,60

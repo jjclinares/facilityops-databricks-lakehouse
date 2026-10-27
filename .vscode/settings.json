@@ -1,0 +1,11 @@
+{
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+        "pyproject.toml": ".gitignore, .pre-commit-config.yaml, .python-version, uv.lock",
+        "databricks.yml": "resources"
+    },
+    "python.testing.pytestEnabled": true,
+    "files.associations": {
+        "dbt/**/*.sql": "jinja-sql"
+    }
+}

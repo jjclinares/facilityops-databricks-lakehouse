@@ -1,0 +1,8 @@
+chapter_type,chapter_type_label,chapter_type_order,is_expense
+operating_expenses,Operating Expenses,1,true
+income,Income,2,false
+non_operating_expenses,Non-Operating Expenses,3,true
+capex,Capital Expenditure (CAPEX),4,true
+other_income_and_expenses,Other Income and Expenses,5,false
+depreciation_amortization,Depreciation and Amortization,6,true
+taxes,Taxes,7,true

@@ -1,0 +1,56 @@
+# Databricks Asset Bundle: deploys the ingestion wheel, the dbt project and the
+# orchestration job.
+#
+#   databricks bundle deploy            # dev target, per-user schemas
+#   databricks bundle run medallion_pipeline
+#   databricks bundle deploy -t prod
+bundle:
+  name: medallion_lakehouse
+
+include:
+  - resources/*.yml
+
+artifacts:
+  medallion_ingest:
+    type: whl
+    build: uv build --wheel
+    path: .
+    # unique version per deploy so serverless never reuses a stale wheel
+    dynamic_version: true
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for every layer (Databricks Free Edition ships with `workspace`).
+    default: workspace
+  schema_prefix:
+    description: Prefix for the bronze / silver / gold schemas.
+    default: ""
+  source:
+    description: "Bronze source: synthetic (generate + Auto Loader), landing (Auto Loader only) or postgres (JDBC)."
+    default: synthetic
+  synthetic_scale:
+    description: Synthetic data volume multiplier (1 = 25 buildings, ~20k rows).
+    default: "1"
+  secret_scope:
+    description: Secret scope holding postgres-url / postgres-user / postgres-password (source=postgres only).
+    default: ""
+  warehouse_id:
+    description: SQL warehouse that runs dbt. Override with --var warehouse_id=<id> if yours has another name.
+    lookup:
+      warehouse: Serverless Starter Warehouse
+
+targets:
+  dev:
+    # prefixes the job name with [dev <user>], pauses schedules and isolates schemas
+    mode: development
+    default: true
+    variables:
+      schema_prefix: dev_${workspace.current_user.short_name}_
+
+  prod:
+    mode: production
+    workspace:
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    permissions:
+      - user_name: ${workspace.current_user.userName}
+        level: CAN_MANAGE
