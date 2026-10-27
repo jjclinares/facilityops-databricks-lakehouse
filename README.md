@@ -4,7 +4,7 @@
 
 **An end-to-end, production-style data platform on Databricks: Auto Loader & JDBC ingestion, a dbt-built medallion architecture on Unity Catalog, and a star schema answering real operational questions, all deployed as code with Databricks Asset Bundles on serverless compute.**
 
-[![CI](https://github.com/jjclinares/medallion_arq_ingest/actions/workflows/ci.yml/badge.svg)](https://github.com/jjclinares/medallion_arq_ingest/actions/workflows/ci.yml)
+[![CI](https://github.com/jjclinares/facilityops-databricks-lakehouse/actions/workflows/ci.yml/badge.svg)](https://github.com/jjclinares/facilityops-databricks-lakehouse/actions/workflows/ci.yml)
 ![Databricks](https://img.shields.io/badge/Databricks-Serverless-FF3621?logo=databricks&logoColor=white)
 ![Unity Catalog](https://img.shields.io/badge/Unity%20Catalog-governed-1B3139)
 ![Delta Lake](https://img.shields.io/badge/Delta%20Lake-liquid%20clustering-00ADD4)
@@ -266,8 +266,8 @@ Every run lands a full snapshot in a new folder. Auto Loader checkpoints ensure 
 - [uv](https://docs.astral.sh/uv/), used by the bundle to build the wheel.
 
 ```bash
-git clone https://github.com/jjclinares/medallion_arq_ingest.git
-cd medallion_arq_ingest
+git clone https://github.com/jjclinares/facilityops-databricks-lakehouse.git
+cd facilityops-databricks-lakehouse
 
 # 1. authenticate (opens the browser)
 databricks auth login --host https://<your-workspace>.cloud.databricks.com
