@@ -18,23 +18,9 @@
 
 ## 📌 At a glance
 
-**🧭 Project type:** Data engineering. A *lakehouse* (a modern data platform) built on Databricks, from raw data to business-ready tables.
+**💼 Business:** know, building by building, whether maintenance is done on time, how long equipment really fails, whether service-desk SLAs are met and how the budget is executed.
 
-**💡 In one sentence:** it takes the messy operational data of a facility-management company and turns it into clean, tested tables that answer real questions about maintenance, failures, service tickets, budgets and utility use.
-
-**🔄 How it works, in 3 steps (the "medallion" pattern):**
-
-| Step | Layer | What happens | Tool |
-|---|---|---|---|
-| 1️⃣ | 🥉 **Bronze** | Raw data arrives untouched, with an audit trail | PySpark, Auto Loader, JDBC |
-| 2️⃣ | 🥈 **Silver** | Data is cleaned, typed and de-duplicated | dbt |
-| 3️⃣ | 🥇 **Gold** | A star schema ready for dashboards and analysis | dbt |
-
-**✅ What it shows:**
-- Incremental, re-runnable loads that never duplicate data
-- Data-quality tests that stop bad data before it reaches reports
-- The whole platform deployed as code, with automated checks on every change
-- Everything runs without any outside database, using a built-in synthetic data generator
+**⚙️ Technical:** a scalable data platform on Databricks. Data lands raw (🥉 Bronze), is cleaned and tested with dbt (🥈 Silver) and becomes a star schema ready for reporting (🥇 Gold). Loads are incremental and re-runnable, and everything is deployed as code with automated checks.
 
 **🧰 Environment**
 
@@ -47,11 +33,10 @@
 ![SQL](https://img.shields.io/badge/SQL-4479A1?style=flat-square)
 ![Asset Bundles](https://img.shields.io/badge/Asset%20Bundles-FF3621?style=flat-square&logo=databricks&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
-![pytest](https://img.shields.io/badge/pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white)
 
 **🚀 Jump to:** [Architecture](#architecture) · [Quick start](#quick-start-databricks-free-edition-works) · [Gold data model](#gold-data-model) · [Design decisions](#design-decisions)
 
-> 📖 Everything below is the full technical detail of the same project.
+> 📖 Everything below is the full detail of the same project.
 
 ---
 
